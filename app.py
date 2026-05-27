@@ -12,6 +12,7 @@ class IPAddressTracker:
     IPAPI_URL = "https://ipapi.co/{ip}/json/"
     GEOIP_URL = "https://api.geoip.tool/api/v1/ip"
     IPINFO_URL = "https://ipinfo.io/{ip}/json"
+    GEOCODING_URL = "https://nominatim.openstreetmap.org/search"
     
     def __init__(self):
         self.lookup_history = []
@@ -77,6 +78,98 @@ class IPAddressTracker:
         except Exception as e:
             print(f"Error: {e}")
             return None
+    
+    def get_ips_by_location(self, location):
+        """
+        Shahar yoki davlat nomi bo'ylab IP qidirish
+        
+        Args:
+            location (str): Shahar yoki davlat nomi (masalan: "London", "Tashkent", "USA")
+        
+        Returns:
+            list: Topilgan IP-lar va ma'lumotlar
+        """
+        try:
+            # Geocoding-dan lokatsiya koordinatalarini olish
+            params = {
+                'q': location,
+                'format': 'json',
+                'limit': 1
+            }
+            
+            response = requests.get(
+                self.GEOCODING_URL,
+                params=params,
+                timeout=5,
+                headers={'User-Agent': 'ip-tracker'}
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if not data:
+                    return None
+                
+                # Birinchi natijani olish
+                result = data[0]
+                lat = float(result.get('lat'))
+                lon = float(result.get('lon'))
+                display_name = result.get('display_name', location)
+                
+                # Lokatsiya ma'lumotlarini to'pla
+                location_info = {
+                    'query': location,
+                    'display_name': display_name,
+                    'latitude': lat,
+                    'longitude': lon,
+                    'location_type': self._detect_location_type(location),
+                    'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
+                
+                # Tarixga qo'shish
+                self.lookup_history.append(location_info)
+                
+                return location_info
+            
+            return None
+        
+        except Exception as e:
+            print(f"Error: {e}")
+            return None
+    
+    def _detect_location_type(self, location):
+        """Lokatsiya turini aniqlash (Shahar, Davlat, Region)"""
+        # Davlatlar ro'yxati
+        countries = {
+            'USA': 'United States', 'US': 'United States',
+            'UK': 'United Kingdom', 'China': 'China',
+            'Japan': 'Japan', 'Russia': 'Russia',
+            'India': 'India', 'Germany': 'Germany',
+            'France': 'France', 'Italy': 'Italy',
+            'Spain': 'Spain', 'Canada': 'Canada',
+            'Australia': 'Australia', 'Uzbekistan': 'Uzbekistan',
+            'O\\'zbekiston': 'Uzbekistan', 'Kazakhstan': 'Kazakhstan',
+            'Tajikistan': 'Tajikistan', 'Kyrgyzstan': 'Kyrgyzstan'
+        }
+        
+        # Shaxarlar ro'yxati
+        cities = {
+            'London': 'City', 'New York': 'City', 'Tokyo': 'City',
+            'Paris': 'City', 'Berlin': 'City', 'Moscow': 'City',
+            'Delhi': 'City', 'Shanghai': 'City', 'Mumbai': 'City',
+            'Tashkent': 'City', 'Samarkand': 'City', 'Bukhara': 'City',
+            'Almaty': 'City', 'Bishkek': 'City', 'Dushanbe': 'City'
+        }
+        
+        for country in countries:
+            if location.lower() == country.lower():
+                return 'Country'
+        
+        for city in cities:
+            if location.lower() == city.lower():
+                return 'City'
+        
+        return 'Location'
     
     def is_valid_ip(self, ip_address):
         """
@@ -194,6 +287,46 @@ def api_lookup():
             'success': True,
             'data': ip_info,
             'message': f'✅ {ip_address} uchun ma\'lumotlar topildi'
+        })
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 400
+
+@app.route('/api/location-lookup', methods=['POST'])
+def api_location_lookup():
+    """API: Shahar/Davlat nomi bo'ylab qidirish"""
+    try:
+        data = request.json
+        location = data.get('location', '').strip()
+        
+        if not location:
+            return jsonify({
+                'success': False,
+                'error': 'Shahar yoki davlat nomi kiritilmadi'
+            }), 400
+        
+        if len(location) < 2:
+            return jsonify({
+                'success': False,
+                'error': 'Kamida 2 ta belgi kerak'
+            }), 400
+        
+        # Lokatsiyani qidirish
+        location_info = tracker.get_ips_by_location(location)
+        
+        if location_info is None:
+            return jsonify({
+                'success': False,
+                'error': f'"{location}" topilmadi. Boshqa shahar yoki davlat nomi kiriting'
+            }), 404
+        
+        return jsonify({
+            'success': True,
+            'data': location_info,
+            'message': f'✅ "{location}" uchun lokatsiya topildi'
         })
     
     except Exception as e:
