@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌐 IP Address Tracker - Lokatsiya va Info</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🌐 IP Address Tracker</h1>
+                <p>IP addressni qidiring va lokatsiyani aniqlang</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Search Card -->
+            <div class="card search-card">
+                <h2>🔍 IP Address Qidirish</h2>
+                
+                <div class="search-section">
+                    <div class="search-input-group">
+                        <input type="text" id="ipInput" placeholder="IP address kiriting... (masalan: 8.8.8.8)" value="{{ client_ip }}">
+                        <button class="btn btn-search" onclick="searchIP()">🔍 Qidirish</button>
+                    </div>
+                    <button class="btn btn-secondary" onclick="getMyIP()">📍 O'z IP-m</button>
+                </div>
+
+                <!-- Status -->
+                <div class="status" id="status"></div>
+            </div>
+
+            <!-- Map Card -->
+            <div class="card map-card" id="mapCard" style="display: none;">
+                <h3>🗺️ Geolokatsiya Xaritasi</h3>
+                <div id="map" style="height: 400px; border-radius: 10px; overflow: hidden;"></div>
+            </div>
+
+            <!-- Information Cards -->
+            <div class="info-grid" id="infoGrid" style="display: none;">
+                <!-- IP Address -->
+                <div class="info-card">
+                    <div class="info-icon">🌐</div>
+                    <div class="info-content">
+                        <h4>IP Address</h4>
+                        <p id="infoIP">-</p>
+                    </div>
+                </div>
+
+                <!-- Location -->
+                <div class="info-card">
+                    <div class="info-icon">🗍️</div>
+                    <div class="info-content">
+                        <h4>Lokatsiya</h4>
+                        <p id="infoLocation">-</p>
+                    </div>
+                </div>
+
+                <!-- Country -->
+                <div class="info-card">
+                    <div class="info-icon">🗮️</div>
+                    <div class="info-content">
+                        <h4>Mamlakat</h4>
+                        <p id="infoCountry">-</p>
+                    </div>
+                </div>
+
+                <!-- Timezone -->
+                <div class="info-card">
+                    <div class="info-icon">⏱️</div>
+                    <div class="info-content">
+                        <h4>Vaqt Mintaqasi</h4>
+                        <p id="infoTimezone">-</p>
+                    </div>
+                </div>
+
+                <!-- ISP -->
+                <div class="info-card">
+                    <div class="info-icon">📋</div>
+                    <div class="info-content">
+                        <h4>ISP (Organizatsiya)</h4>
+                        <p id="infoISP">-</p>
+                    </div>
+                </div>
+
+                <!-- ASN -->
+                <div class="info-card">
+                    <div class="info-icon">🔗</div>
+                    <div class="info-content">
+                        <h4>ASN (Network)</h4>
+                        <p id="infoASN">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Information -->
+            <div class="card details-card" id="detailsCard" style="display: none;">
+                <h3>📝 Detalliy Ma'lumotlar</h3>
+                <div class="details-grid" id="detailsGrid"></div>
+            </div>
+
+            <!-- Features -->
+            <div class="features-section">
+                <h2>✨ Xususiyatlar</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <span class="feature-icon">🌐</span>
+                        <h4>IP Qidirish</h4>
+                        <p>Har qanday IP addressni aniqlash</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">🗺️</span>
+                        <h4>Geolokatsiya Xaritalari</h4>
+                        <p>Leaflet xaritalari bilan lokatsiya</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">🌍</span>
+                        <h4>Ma'lumotlar</h4>
+                        <p>Mamlakat, Shahar, ISP va boshqalar</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">💾</span>
+                        <h4>Tarix</h4>
+                        <p>Oxirgi qidiruvlarni saqlash</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">⚡</span>
+                        <h4>Real-time</h4>
+                        <p>Tez va aniq ma'lumotlar</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">🔒</span>
+                        <h4>Xavfsizlik</h4>
+                        <p>VPN va Proxy aniqlash</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History -->
+            <div class="card history-card" id="historyCard" style="display: none;">
+                <h3>📜 Oxirgi Qidiruvlar</h3>
+                <div class="history-list" id="historyList"></div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>🌐 IP Address Tracker | Powered by ipapi.co</p>
+            <p>Muallif: <a href="https://github.com/alibekde">@alibekde</a></p>
+        </footer>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
